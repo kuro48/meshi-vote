@@ -130,17 +130,24 @@ export function OrderPhase({ room, participants, currentParticipant }: Props) {
               </div>
               <span className="text-sm font-bold text-amber-400">{members.length}人</span>
             </div>
-            <ul className="flex flex-col gap-1.5">
+            <ul className="flex flex-col gap-2">
               {members.map((member) => {
                 const memberOrder = orders.find((o) => o.participant_id === member.id)
                 const hasOrdered = orderedParticipantIds.has(member.id)
                 return (
-                  <li key={member.id} className="flex items-start justify-between gap-2 text-sm">
-                    <span className="text-slate-300 flex-shrink-0">{member.nickname}</span>
-                    {restaurant.is_delivery && (
-                      <span className={`text-xs text-right ${hasOrdered ? 'text-green-400' : 'text-slate-600'}`}>
-                        {hasOrdered ? `✓ ${memberOrder?.order_text ?? ''}` : '未入力'}
-                      </span>
+                  <li key={member.id} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-200">{member.nickname}</span>
+                      {restaurant.is_delivery && (
+                        <span className={`text-xs font-semibold ${hasOrdered ? 'text-green-400' : 'text-slate-600'}`}>
+                          {hasOrdered ? '✓ 入力済み' : '未入力'}
+                        </span>
+                      )}
+                    </div>
+                    {restaurant.is_delivery && hasOrdered && memberOrder?.order_text && (
+                      <p className="text-sm text-slate-100 bg-slate-800 rounded-xl px-3 py-2 border border-slate-700 whitespace-pre-wrap">
+                        {memberOrder.order_text}
+                      </p>
                     )}
                   </li>
                 )

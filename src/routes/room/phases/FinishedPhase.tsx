@@ -92,13 +92,15 @@ export function FinishedPhase({ room, participants }: Props) {
             )}
 
             {restaurant.is_delivery && groupOrders.length > 0 ? (
-              <ul className="flex flex-col gap-1.5 border-t border-slate-800 pt-3 mt-1">
+              <ul className="flex flex-col gap-2 border-t border-slate-800 pt-3 mt-1">
                 {groupOrders.map((order) => (
-                  <li key={order.id} className="flex items-start justify-between gap-3 text-sm">
-                    <span className="text-amber-400 font-medium flex-shrink-0">
+                  <li key={order.id} className="flex flex-col gap-1">
+                    <span className="text-xs font-semibold text-amber-400">
                       {order.participants?.nickname ?? '不明'}
                     </span>
-                    <span className="text-slate-300 text-right">{order.order_text}</span>
+                    <p className="text-sm text-slate-100 bg-slate-800 rounded-xl px-3 py-2 border border-slate-700 whitespace-pre-wrap">
+                      {order.order_text}
+                    </p>
                   </li>
                 ))}
               </ul>
