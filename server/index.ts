@@ -319,6 +319,7 @@ app.get('/api/places/nearby', async (c) => {
       body: JSON.stringify({
         includedTypes: ['restaurant'],
         maxResultCount: 20,
+        languageCode: 'ja',
         locationRestriction: {
           circle: {
             center: { latitude: parseFloat(lat), longitude: parseFloat(lng) },

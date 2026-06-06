@@ -1,8 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Room, Participant } from '@/types/domain'
 import { RestaurantCard } from '@/components/restaurants/RestaurantCard'
-import { ManualRestaurantForm } from '@/components/restaurants/ManualRestaurantForm'
-import { NearbyRestaurantSearch } from '@/components/restaurants/NearbyRestaurantSearch'
+import { RestaurantPicker } from '@/components/restaurants/RestaurantPicker'
 import { Button } from '@/components/ui/Button'
 import { getRestaurants, addRestaurant, deleteRestaurant, type AddRestaurantInput } from '@/lib/api/restaurants'
 import { advancePhase } from '@/lib/api/rooms'
@@ -78,13 +77,7 @@ export function RestaurantsPhase({ room, currentParticipant }: Props) {
       )}
 
       {canAddRestaurant && (
-        <div className="flex flex-col gap-4">
-          <NearbyRestaurantSearch onAdd={handleAdd} addedPlaceIds={addedPlaceIds} />
-          <div className="border-t border-slate-800 pt-4">
-            <p className="text-xs text-slate-500 mb-3">または手動で入力</p>
-            <ManualRestaurantForm onSubmit={handleAdd} />
-          </div>
-        </div>
+        <RestaurantPicker onAdd={handleAdd} addedPlaceIds={addedPlaceIds} />
       )}
 
       {!canAddRestaurant && restaurants.length === 0 && (
