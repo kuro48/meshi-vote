@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import type { Room, Participant } from '@/types/domain'
-import { OrderSummary } from '@/components/orders/OrderSummary'
 import { Button } from '@/components/ui/Button'
 import { getRestaurants } from '@/lib/api/restaurants'
+import { getVotes } from '@/lib/api/votes'
 import { getOrders } from '@/lib/api/orders'
 import { useSessionStore } from '@/store/sessionStore'
 
@@ -13,13 +13,19 @@ interface Props {
   currentParticipant: Participant | null
 }
 
-export function FinishedPhase({ room }: Props) {
+export function FinishedPhase({ room, participants }: Props) {
   const navigate = useNavigate()
   const clearSession = useSessionStore((s) => s.clearSession)
 
   const { data: restData } = useQuery({
     queryKey: ['restaurants', room.code],
     queryFn: () => getRestaurants(room.code),
+    staleTime: 1000 * 60,
+  })
+
+  const { data: voteData } = useQuery({
+    queryKey: ['votes', room.code],
+    queryFn: () => getVotes(room.code),
     staleTime: 1000 * 60,
   })
 
@@ -30,9 +36,21 @@ export function FinishedPhase({ room }: Props) {
   })
 
   const restaurants = restData?.restaurants ?? []
+  const votes = voteData?.votes ?? []
   const orders = orderData?.orders ?? []
-  const winner = restaurants.find((r) => r.id === room.winning_restaurant_id)
-  const hasOrders = orders.length > 0
+
+  const groups = restaurants
+    .map((restaurant) => {
+      const members = participants.filter((p) =>
+        votes.some((v) => v.participant_id === p.id && v.restaurant_id === restaurant.id)
+      )
+      const groupOrders = orders.filter((o) =>
+        votes.some((v) => v.participant_id === o.participant_id && v.restaurant_id === restaurant.id)
+      )
+      return { restaurant, members, orders: groupOrders }
+    })
+    .filter((g) => g.members.length > 0)
+    .sort((a, b) => b.members.length - a.members.length)
 
   const handleLeave = () => {
     clearSession()
@@ -40,33 +58,65 @@ export function FinishedPhase({ room }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-6 items-center text-center">
-      <div className="text-6xl mt-4">🎉</div>
-
-      <div>
-        <p className="text-slate-400 text-sm mb-1">今日のご飯は</p>
-        <h2 className="font-display text-4xl font-bold text-amber-400">{winner?.name ?? '—'}</h2>
-        {winner?.address && (
-          <p className="text-slate-400 text-sm mt-1">{winner.address}</p>
-        )}
-        {winner?.external_url && (
-          <a
-            href={winner.external_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-amber-400 hover:underline mt-2 inline-block"
-          >
-            注文ページを開く →
-          </a>
-        )}
+    <div className="flex flex-col gap-6">
+      <div className="text-center py-2">
+        <div className="text-5xl mb-3">🎉</div>
+        <p className="text-slate-400 text-sm">グループ確定！</p>
       </div>
 
-      {hasOrders && (
-        <div className="w-full text-left">
-          <p className="text-sm font-medium text-slate-300 mb-3">注文一覧</p>
-          <OrderSummary orders={orders} />
-        </div>
-      )}
+      <div className="flex flex-col gap-3">
+        {groups.map(({ restaurant, members, orders: groupOrders }) => (
+          <div key={restaurant.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{restaurant.is_delivery ? '🛵' : '🍽️'}</span>
+                <div>
+                  <p className="font-semibold text-slate-100">{restaurant.name}</p>
+                  {restaurant.address && (
+                    <p className="text-xs text-slate-500">{restaurant.address}</p>
+                  )}
+                </div>
+              </div>
+              <span className="text-lg font-bold text-amber-400">{members.length}人</span>
+            </div>
+
+            {restaurant.external_url && (
+              <a
+                href={restaurant.external_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-amber-400 hover:underline mb-3 inline-block"
+              >
+                注文ページを開く →
+              </a>
+            )}
+
+            {restaurant.is_delivery && groupOrders.length > 0 ? (
+              <ul className="flex flex-col gap-1.5 border-t border-slate-800 pt-3 mt-1">
+                {groupOrders.map((order) => (
+                  <li key={order.id} className="flex items-start justify-between gap-3 text-sm">
+                    <span className="text-amber-400 font-medium flex-shrink-0">
+                      {order.participants?.nickname ?? '不明'}
+                    </span>
+                    <span className="text-slate-300 text-right">{order.order_text}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex flex-wrap gap-1.5 border-t border-slate-800 pt-3 mt-1">
+                {members.map((m) => (
+                  <span
+                    key={m.id}
+                    className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300"
+                  >
+                    {m.nickname}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
       <Button onClick={handleLeave} variant="ghost" size="sm">
         ルームを退出

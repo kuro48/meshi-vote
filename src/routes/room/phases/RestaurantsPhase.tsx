@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Room, Participant } from '@/types/domain'
 import { RestaurantCard } from '@/components/restaurants/RestaurantCard'
 import { ManualRestaurantForm } from '@/components/restaurants/ManualRestaurantForm'
+import { NearbyRestaurantSearch } from '@/components/restaurants/NearbyRestaurantSearch'
 import { Button } from '@/components/ui/Button'
 import { getRestaurants, addRestaurant, deleteRestaurant, type AddRestaurantInput } from '@/lib/api/restaurants'
 import { advancePhase } from '@/lib/api/rooms'
@@ -27,6 +28,7 @@ export function RestaurantsPhase({ room, currentParticipant }: Props) {
   })
 
   const restaurants = data?.restaurants ?? []
+  const addedPlaceIds = new Set(restaurants.map((r) => r.google_place_id).filter(Boolean) as string[])
 
   const handleAdd = async (input: AddRestaurantInput) => {
     await addRestaurant(room.code, input)
@@ -77,7 +79,13 @@ export function RestaurantsPhase({ room, currentParticipant }: Props) {
       )}
 
       {isRepresentative && (
-        <ManualRestaurantForm onSubmit={handleAdd} />
+        <div className="flex flex-col gap-4">
+          <NearbyRestaurantSearch onAdd={handleAdd} addedPlaceIds={addedPlaceIds} />
+          <div className="border-t border-slate-800 pt-4">
+            <p className="text-xs text-slate-500 mb-3">または手動で入力</p>
+            <ManualRestaurantForm onSubmit={handleAdd} />
+          </div>
+        </div>
       )}
 
       {!isHost && !isRepresentative && restaurants.length === 0 && (

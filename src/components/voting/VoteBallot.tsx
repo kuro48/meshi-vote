@@ -30,7 +30,7 @@ export function VoteBallot({ restaurant, voteCount, totalVotes, isSelected, onVo
           <div className="flex items-center justify-between gap-2">
             <span className="font-semibold text-slate-100 truncate">{restaurant.name}</span>
             <span className={`text-sm font-bold ${isSelected ? 'text-amber-400' : 'text-slate-400'}`}>
-              {voteCount}票
+              {voteCount}人
             </span>
           </div>
 

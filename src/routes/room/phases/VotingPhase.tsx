@@ -34,15 +34,14 @@ export function VotingPhase({ room, participants, currentParticipant }: Props) {
 
   const restaurants = restData?.restaurants ?? []
   const votes = voteData?.votes ?? []
-  const totalVotes = votes.length
 
   const myVote = votes.find((v) => v.participant_id === currentParticipant?.id)
 
-  const votesPerRestaurant = Object.fromEntries(
+  const participantCountPerRestaurant = Object.fromEntries(
     restaurants.map((r) => [r.id, votes.filter((v) => v.restaurant_id === r.id).length])
   )
 
-  const handleVote = async (restaurantId: string) => {
+  const handleJoin = async (restaurantId: string) => {
     if (isVoting) return
     setIsVoting(true)
     try {
@@ -53,30 +52,29 @@ export function VotingPhase({ room, participants, currentParticipant }: Props) {
     }
   }
 
-  const handleAdvance = async () => {
-    const winnerEntry = Object.entries(votesPerRestaurant).sort(([, a], [, b]) => b - a)[0]
-    const winnerId = winnerEntry?.[0]
-    const hasDelivery = restaurants.find((r) => r.id === winnerId)?.is_delivery
-    const nextPhase = hasDelivery ? 'order' : 'finished'
+  const handleConfirm = async () => {
+    const activeRestaurantIds = new Set(votes.map((v) => v.restaurant_id))
+    const hasDeliveryGroup = restaurants.some(
+      (r) => r.is_delivery && activeRestaurantIds.has(r.id)
+    )
+    const nextPhase = hasDeliveryGroup ? 'order' : 'finished'
     setIsAdvancing(true)
     try {
-      await advancePhase(room.code, nextPhase, winnerId)
+      await advancePhase(room.code, nextPhase)
       await queryClient.invalidateQueries({ queryKey: ['room', room.code] })
     } finally {
       setIsAdvancing(false)
     }
   }
 
-  const allVoted = participants.length > 0 && participants.every((p) =>
-    votes.some((v) => v.participant_id === p.id)
-  )
+  const joinedCount = votes.length
 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
-        <h2 className="font-semibold text-slate-100 mb-1">どこに行く？</h2>
+        <h2 className="font-semibold text-slate-100 mb-1">参加するお店を選ぼう</h2>
         <p className="text-sm text-slate-400">
-          {myVote ? '投票済みです（変更可能）' : 'お店を選んでください'}
+          {myVote ? '参加済みです（変更可能）' : 'どのグループに入りますか？'}
         </p>
       </div>
 
@@ -85,10 +83,10 @@ export function VotingPhase({ room, participants, currentParticipant }: Props) {
           <li key={r.id}>
             <VoteBallot
               restaurant={r}
-              voteCount={votesPerRestaurant[r.id] ?? 0}
-              totalVotes={totalVotes}
+              voteCount={participantCountPerRestaurant[r.id] ?? 0}
+              totalVotes={joinedCount}
               isSelected={myVote?.restaurant_id === r.id}
-              onVote={handleVote}
+              onVote={handleJoin}
               isDisabled={isVoting}
             />
           </li>
@@ -96,16 +94,16 @@ export function VotingPhase({ room, participants, currentParticipant }: Props) {
       </ul>
 
       <p className="text-xs text-center text-slate-500">
-        投票済み {votes.length} / {participants.length}人
+        参加済み {joinedCount} / {participants.length}人
       </p>
 
       {isHost && (
         <Button
-          onClick={handleAdvance}
+          onClick={handleConfirm}
           isLoading={isAdvancing}
-          disabled={totalVotes === 0}
+          disabled={joinedCount === 0}
         >
-          {allVoted ? '結果を確定 →' : `結果を確定 (${votes.length}票)`}
+          グループを確定する ({joinedCount}人参加済み)
         </Button>
       )}
     </div>

@@ -35,15 +35,16 @@ export function RepresentativesPhase({ room, participants, currentParticipant }:
     if (selected.size < MIN_REPS) return
     setIsLoading(true)
     try {
-      await setRepresentatives(room.code, Array.from(selected))
+      // ホスト自身は role を変えずにお店追加権限を持つため送信から除外
+      const hostId = currentParticipant?.id
+      const nonHostSelected = Array.from(selected).filter((id) => id !== hostId)
+      await setRepresentatives(room.code, nonHostSelected)
       await advancePhase(room.code, 'restaurants')
       await queryClient.invalidateQueries({ queryKey: ['room', room.code] })
     } finally {
       setIsLoading(false)
     }
   }
-
-  const nonHostParticipants = participants.filter((p) => p.role !== 'host')
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,11 +55,11 @@ export function RepresentativesPhase({ room, participants, currentParticipant }:
 
       {isHost ? (
         <>
-          {nonHostParticipants.length === 0 ? (
-            <p className="text-center text-slate-500 text-sm py-4">ホスト以外の参加者がいません</p>
+          {participants.length === 0 ? (
+            <p className="text-center text-slate-500 text-sm py-4">参加者がいません</p>
           ) : (
             <ul className="flex flex-col gap-2">
-              {nonHostParticipants.map((p) => {
+              {participants.map((p) => {
                 const isSelected = selected.has(p.id)
                 return (
                   <li key={p.id}>

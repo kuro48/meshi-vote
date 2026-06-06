@@ -10,7 +10,7 @@ const STEPS: PhaseStep[] = [
   { key: 'waiting', label: '集合', emoji: '👥' },
   { key: 'representatives', label: '代表', emoji: '⭐' },
   { key: 'restaurants', label: 'お店', emoji: '🍜' },
-  { key: 'voting', label: '投票', emoji: '🗳️' },
+  { key: 'voting', label: '参加', emoji: '🙋' },
   { key: 'finished', label: '決定', emoji: '🎉' },
 ]
 
