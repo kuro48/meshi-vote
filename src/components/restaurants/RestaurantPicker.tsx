@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useNearbyRestaurants } from '@/hooks/useNearbyRestaurants'
 import { useRestaurantHistory } from '@/hooks/useRestaurantHistory'
+import { searchItems } from '@/lib/searchUtils'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import type { AddRestaurantInput } from '@/lib/api/restaurants'
@@ -37,13 +38,15 @@ export function RestaurantPicker({ onAdd, addedPlaceIds }: Props) {
 
   const trimmed = query.trim()
 
-  const nearbyResults = trimmed
-    ? places.filter((p) => p.name.toLowerCase().includes(trimmed.toLowerCase()))
-    : places
+  const nearbyResults = useMemo(
+    () => searchItems(places, trimmed, (p) => p.name),
+    [places, trimmed]
+  )
 
-  const historyResults = trimmed
-    ? history.filter((h) => h.name.toLowerCase().includes(trimmed.toLowerCase()))
-    : history.slice(0, 5)
+  const historyResults = useMemo(
+    () => (trimmed ? searchItems(history, trimmed, (h) => h.name) : history.slice(0, 5)),
+    [history, trimmed]
+  )
 
   const handleAddNearby = async (place: PlaceResult) => {
     setIsAdding(true)
