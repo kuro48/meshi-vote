@@ -4,8 +4,7 @@ import type { Room, Participant } from '@/types/domain'
 import { Button } from '@/components/ui/Button'
 import { setRepresentatives, advancePhase } from '@/lib/api/rooms'
 
-const MIN_REPS = 2
-const MAX_REPS = 3
+const MIN_REPS = 1
 
 interface Props {
   room: Room
@@ -24,7 +23,7 @@ export function RepresentativesPhase({ room, participants, currentParticipant }:
       const next = new Set(prev)
       if (next.has(id)) {
         next.delete(id)
-      } else if (next.size < MAX_REPS) {
+      } else {
         next.add(id)
       }
       return next
@@ -35,7 +34,6 @@ export function RepresentativesPhase({ room, participants, currentParticipant }:
     if (selected.size < MIN_REPS) return
     setIsLoading(true)
     try {
-      // ホスト自身は role を変えずにお店追加権限を持つため送信から除外
       const hostId = currentParticipant?.id
       const nonHostSelected = Array.from(selected).filter((id) => id !== hostId)
       await setRepresentatives(room.code, nonHostSelected)
@@ -50,7 +48,7 @@ export function RepresentativesPhase({ room, participants, currentParticipant }:
     <div className="flex flex-col gap-4">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
         <h2 className="font-semibold text-slate-100 mb-1">代表者を選んでください</h2>
-        <p className="text-sm text-slate-400">{MIN_REPS}〜{MAX_REPS}人を選んでお店を提案してもらいます</p>
+        <p className="text-sm text-slate-400">{MIN_REPS}人以上を選んでお店を提案してもらいます（ホストは常に提案できます）</p>
       </div>
 
       {isHost ? (
@@ -85,7 +83,7 @@ export function RepresentativesPhase({ room, participants, currentParticipant }:
             isLoading={isLoading}
             disabled={selected.size < MIN_REPS}
           >
-            代表者を確定 ({selected.size}/{MAX_REPS})
+            代表者を確定 ({selected.size}人選択中)
           </Button>
         </>
       ) : (

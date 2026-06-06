@@ -20,6 +20,7 @@ export function RestaurantsPhase({ room, currentParticipant }: Props) {
 
   const isHost = currentParticipant?.role === 'host'
   const isRepresentative = currentParticipant?.role === 'representative'
+  const canAddRestaurant = isHost || isRepresentative
 
   const { data } = useQuery({
     queryKey: ['restaurants', room.code],
@@ -56,10 +57,8 @@ export function RestaurantsPhase({ room, currentParticipant }: Props) {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
         <h2 className="font-semibold text-slate-100 mb-1">お店を追加</h2>
         <p className="text-sm text-slate-400">
-          {isRepresentative
+          {canAddRestaurant
             ? 'あなたはお店を提案できます'
-            : isHost
-            ? '代表者がお店を入力しています'
             : 'ホストと代表者がお店を入力中です'}
         </p>
       </div>
@@ -70,7 +69,7 @@ export function RestaurantsPhase({ room, currentParticipant }: Props) {
             <li key={r.id}>
               <RestaurantCard
                 restaurant={r}
-                canDelete={isRepresentative && r.added_by_id === currentParticipant?.id}
+                canDelete={isHost || (isRepresentative && r.added_by_id === currentParticipant?.id)}
                 onDelete={() => handleDelete(r.id)}
               />
             </li>
@@ -78,7 +77,7 @@ export function RestaurantsPhase({ room, currentParticipant }: Props) {
         </ul>
       )}
 
-      {isRepresentative && (
+      {canAddRestaurant && (
         <div className="flex flex-col gap-4">
           <NearbyRestaurantSearch onAdd={handleAdd} addedPlaceIds={addedPlaceIds} />
           <div className="border-t border-slate-800 pt-4">
@@ -88,7 +87,7 @@ export function RestaurantsPhase({ room, currentParticipant }: Props) {
         </div>
       )}
 
-      {!isHost && !isRepresentative && restaurants.length === 0 && (
+      {!canAddRestaurant && restaurants.length === 0 && (
         <p className="text-center text-slate-500 text-sm py-4 animate-pulse">
           代表者がお店を入力中です...
         </p>

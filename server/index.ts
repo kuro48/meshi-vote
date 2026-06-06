@@ -317,8 +317,8 @@ app.get('/api/places/nearby', async (c) => {
         'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.priceLevel',
       },
       body: JSON.stringify({
-        includedTypes: ['restaurant', 'food', 'meal_takeaway', 'meal_delivery'],
-        maxResultCount: 10,
+        includedTypes: ['restaurant'],
+        maxResultCount: 20,
         locationRestriction: {
           circle: {
             center: { latitude: parseFloat(lat), longitude: parseFloat(lng) },
